@@ -80,16 +80,98 @@ def tail_check(head, tail):
 		return("Error: head has moveed too far without tail moving.")
 
 # To move the rope based on head movemments given in the input
-def read_movement(movement):
-	global current_head
-	global current_tail
+def read_movement(movement, part_2=False):
 	direction = movement[0]
 	distance = movement[1]
 
-	for n in range(distance):
-		current_head = move_head(current_head, direction)
-		current_tail = tail_check(current_head, current_tail)
-		tail_history.append(current_tail)
+	if part_2:
+		global head
+
+		for n in range(distance):
+			head.move_knot(direction, head=True)
+
+	else:
+		global current_head
+		global current_tail
+
+		for n in range(distance):
+			current_head = move_head(current_head, direction)
+			current_tail = tail_check(current_head, current_tail)
+			tail_history.append(current_tail)
+
+# Create a knot class for all knots which will keep track of their own position
+# "Head" type will function differently
+
+class Knot:
+	def __init__(self):
+		self.position = (0,0)
+		self.position_history = [(0,0)]
+		self.previous = None
+		self.next = None
+
+	def move_knot(self, direction, head=False):
+		if direction == "U":
+			self.position = tuple([self.position[0], self.position[1] + 1])
+		elif direction == "D":
+			self.position = tuple([self.position[0], self.position[1] - 1])
+		elif direction == "L":
+			self.position = tuple([self.position[0] - 1, self.position[1]])
+		elif direction == "R":
+			self.position = tuple([self.position[0] + 1, self.position[1]])
+		else:
+			print("Error: inappropriate direction given")
+
+		if head:
+			self.position_history.append(self.position)
+			self.next.check_follow(self.position)
+
+	def check_follow(self, previous):
+		lateral_movement = previous[0] - self.position[0]
+		lateral_close = abs(lateral_movement) <= 1
+		vertical_movement = previous[1] - self.position[1]
+		vertical_close = abs(vertical_movement) <= 1
+
+
+		if lateral_close and vertical_close:
+			pass
+		elif lateral_close:
+			if lateral_movement == 0:
+				if vertical_movement < 0:
+					self.move_knot("D")
+				else:
+					self.move_knot("U")
+			else:
+				self.position = tuple(
+						[
+							int(sum([self.position[0], lateral_movement])),
+							int(sum([self.position[1], vertical_movement/2]))
+						]
+					)
+		elif vertical_close:
+			if vertical_movement == 0:
+				if lateral_movement < 0:
+					self.move_knot("L")
+				else:
+					self.move_knot("R")
+			else:
+				self.position = tuple(
+						[
+							int(sum([self.position[0], lateral_movement/2])),
+							int(sum([self.position[1], vertical_movement]))
+						]
+					)
+		else:
+			self.position = tuple(
+					[
+						int(sum([self.position[0], lateral_movement/2])),
+						int(sum([self.position[1], vertical_movement/2]))
+					]
+				)
+
+		self.position_history.append(self.position)
+
+		if self.next:
+			self.next.check_follow(self.position)
 
 
 # Call the functions when the file is run from the command line
@@ -97,9 +179,29 @@ if __name__ == "__main__":
 	# Read the file and prep for processing
 	head_movements = read_puzzle_input("input.txt")
 
-	# Call the function(s) to move the rope
-	for movement in head_movements:
-		read_movement(movement)
+	# #Part 1
+	# # Call the function(s) to move the rope
+	# for movement in head_movements:
+	# 	read_movement(movement)
 
-	# Calculate the nuber of positions the tail has visited and print
-	print(f"Tail of the rope has been to {len(set(tail_history))} positions")
+	# # Calculate the nuber of positions the tail has visited and print
+	# print(f"Tail of the rope has been to {len(set(tail_history))} positions")
+
+
+	# Part 2
+	head = Knot()
+	previous = None
+	current = head
+	last = None
+
+	for n in range(9):
+		current.previous = previous
+		current.next = Knot()
+		previous = current
+		current = current.next
+
+	for movement in head_movements:
+		read_movement(movement, part_2=True)
+
+	print(f"Tail of the rope has been to {len(set(current.position_history))} positions")
+
