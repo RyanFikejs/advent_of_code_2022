@@ -9,6 +9,7 @@ with open("input.txt", "r") as f:
 cycle = 1
 x_register = 1
 signal_strengths = []
+image_map = []
 
 def calculate_signal_strength():
 	global cycle
@@ -31,7 +32,10 @@ def read_instruction(cpu_instruction, signal_strength_relay=False):
 		if calculate_signal:
 			calculate_signal_strength()
 
+		draw_pixel()
 		cycle += 1
+		# draw_pixel()
+
 		# if calculate_signal:
 		# 	calculate_signal_strength()
 	else:
@@ -42,17 +46,48 @@ def read_instruction(cpu_instruction, signal_strength_relay=False):
 			calculate_signal_strength()
 			calculate_signal = False
 
+		draw_pixel()
 		cycle += 1
+		# draw_pixel()
 
 		if signal_strength_relay:
 			if cycle % 40 == 20:
 				calculate_signal_strength()
 
+		draw_pixel()
 		cycle += 1
+		# draw_pixel()
 		x_register += amount
+		# draw_pixel()
 
-		# if calculate_signal:
-		# 	calculate_signal_strength()
+def draw_pixel(sprite=False):
+	global cycle
+	global x_register
+	global image_map
+
+	drawing_pixel = cycle % 40 - 1
+	L = x_register -1
+	R = x_register + 2
+
+	if drawing_pixel in range(L, R):
+		sprite = True
+
+	if sprite:
+		pixel = "#"
+	else:
+		pixel = "."
+
+	image_map.append(pixel)
+
+def render_image():
+	global image_map
+
+	image_lines = [
+		''.join(image_map[n:n+40]) for n in range(0,len(image_map), 40)
+	]
+
+	for line in image_lines:
+		print(line)
 
 
 if __name__ == "__main__":
@@ -61,3 +96,5 @@ if __name__ == "__main__":
 
 	# print(signal_strengths)
 	print(f"Sum of {len(signal_strengths)} signal strengths: {sum(signal_strengths)}")
+	render_image()
+
